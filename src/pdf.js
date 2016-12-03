@@ -59,6 +59,7 @@
     exports.InvalidPDFException = pdfjsLibs.pdfjsSharedUtil.InvalidPDFException;
     exports.MissingPDFException = pdfjsLibs.pdfjsSharedUtil.MissingPDFException;
     exports.SVGGraphics = pdfjsLibs.pdfjsDisplaySVG.SVGGraphics;
+    exports.CanvasGraphics = pdfjsLibs.pdfjsDisplayCanvas.CanvasGraphics;
     exports.UnexpectedResponseException =
       pdfjsLibs.pdfjsSharedUtil.UnexpectedResponseException;
     exports.OPS = pdfjsLibs.pdfjsSharedUtil.OPS;

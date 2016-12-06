@@ -751,6 +751,11 @@ var DeviceCmykCS = (function DeviceCmykCSClosure() {
     this.defaultColor = new Float32Array([0, 0, 0, 1]);
   }
   DeviceCmykCS.prototype = {
+    getCmyk: function DeviceCmykCS_getCmyk(args){
+      return new Uint8Array(args.map(function(n){
+        return n * 100;
+      }));
+    },
     getRgb: ColorSpace.prototype.getRgb,
     getRgbItem: function DeviceCmykCS_getRgbItem(src, srcOffset,
                                                  dest, destOffset) {

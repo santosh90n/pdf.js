@@ -2065,7 +2065,7 @@
 
           var params = this.params;
 
-          var gfxClass = params.canvasGraphicsClass || CanvasGraphics;
+          var gfxClass = PDFJS.canvasGraphicsClass || CanvasGraphics;
 
           this.gfx = new gfxClass(params.canvasContext, this.commonObjs,
             this.objs, params.imageLayer);
@@ -2126,16 +2126,20 @@
         if (this.cancelled) {
           return;
         }
-        this.operatorListIdx = this.gfx.executeOperatorList(this.operatorList,
-          this.operatorListIdx,
-          this._continueBound,
-          this.stepper);
-        if (this.operatorListIdx === this.operatorList.argsArray.length) {
-          this.running = false;
-          if (this.operatorList.lastChunk) {
-            this.gfx.endDrawing();
-            this.callback();
+        try {
+          this.operatorListIdx = this.gfx.executeOperatorList(this.operatorList,
+            this.operatorListIdx,
+            this._continueBound,
+            this.stepper);
+          if (this.operatorListIdx === this.operatorList.argsArray.length) {
+            this.running = false;
+            if (this.operatorList.lastChunk) {
+              this.gfx.endDrawing();
+              this.callback();
+            }
           }
+        } catch(e){
+          this.capability.reject(e);
         }
       }
 

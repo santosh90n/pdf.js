@@ -53,6 +53,8 @@
   exports.MissingPDFException = sharedUtil.MissingPDFException;
   exports.SVGGraphics = displaySVG.SVGGraphics;
   exports.CanvasGraphics = displayCanvas.CanvasGraphics;
+  exports.CachedCanvases = displayCanvas.CachedCanvases;
+  exports.addContextCurrentTransform = displayCanvas.addContextCurrentTransform;
   exports.UnexpectedResponseException = sharedUtil.UnexpectedResponseException;
   exports.OPS = sharedUtil.OPS;
   exports.UNSUPPORTED_FEATURES = sharedUtil.UNSUPPORTED_FEATURES;

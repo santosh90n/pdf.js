@@ -242,6 +242,26 @@
     */
   PDFJS.isEvalSupported = (PDFJS.isEvalSupported === undefined ?
                            true : PDFJS.isEvalSupported);
+  /**
+   * Determines if the colorspace cmyk will be converted to rgb
+   *
+   * @type {boolean}
+   */
+  PDFJS.disableCMYKToRGB = false;
+
+  /**
+   * Specifies the canvas stratch creator
+   *
+   * @type {Function(width, height)}
+   */
+  PDFJS.createScratchCanvas = null;
+
+  /**
+   * Specifies the canvas graphics
+   *
+   * @type {CanvasGraphics}
+   */
+  PDFJS.canvasGraphicsClass = null;
 
   if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('MOZCENTRAL')) {
     var savedOpenExternalLinksInNewWindow = PDFJS.openExternalLinksInNewWindow;

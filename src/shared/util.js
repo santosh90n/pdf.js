@@ -678,6 +678,7 @@ var Util = (function UtilClosure() {
   function Util() {}
 
   var rgbBuf = ['rgb(', 0, ',', 0, ',', 0, ')'];
+  var cmykBuf = ['cmyk(', 0, '%,', 0, '%,', 0, '%,', 0, '%)'];
 
   // makeCssRgb() can be called thousands of times. Using |rgbBuf| avoids
   // creating many intermediate strings.
@@ -686,6 +687,14 @@ var Util = (function UtilClosure() {
     rgbBuf[3] = g;
     rgbBuf[5] = b;
     return rgbBuf.join('');
+  };
+
+  Util.makeCssCMYK = function Util_makeCssCMYK(c, m, y, k){
+    cmykBuf[1] = c;
+    cmykBuf[3] = m;
+    cmykBuf[5] = y;
+    cmykBuf[7] = k;
+    return cmykBuf.join('');
   };
 
   // Concatenates two transformation matrices together and returns the result.

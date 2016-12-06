@@ -1014,13 +1014,23 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               break;
             case OPS.setFillCMYKColor:
               stateManager.state.fillColorSpace = ColorSpace.singletons.cmyk;
-              args = ColorSpace.singletons.cmyk.getRgb(args, 0);
-              fn = OPS.setFillRGBColor;
+
+              if (PDFJS.disableCMYKToRGB) {
+                args = ColorSpace.singletons.cmyk.getCmyk(args);
+              } else {
+                args = ColorSpace.singletons.cmyk.getRgb(args, 0);
+                fn = OPS.setFillRGBColor;
+              }
               break;
             case OPS.setStrokeCMYKColor:
               stateManager.state.strokeColorSpace = ColorSpace.singletons.cmyk;
-              args = ColorSpace.singletons.cmyk.getRgb(args, 0);
-              fn = OPS.setStrokeRGBColor;
+
+              if (PDFJS.disableCMYKToRGB) {
+                args = ColorSpace.singletons.cmyk.getCmyk(args);
+              } else {
+                args = ColorSpace.singletons.cmyk.getRgb(args, 0);
+                fn = OPS.setStrokeRGBColor;
+              }
               break;
             case OPS.setFillRGBColor:
               stateManager.state.fillColorSpace = ColorSpace.singletons.rgb;
@@ -2239,6 +2249,52 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       var cMapOptions = this.options.cMapOptions;
       var properties;
 
+      var exportData = function(value){
+        var result;
+        if (isName(value)){
+          result = {
+            type: 'name',
+            value: value.name
+          };
+        } else if (isRef(value)){
+          result = exportData(xref.fetchIfRef(value));
+        } else if (isStream(value)){
+          result = {
+            type: 'stream',
+            value: {
+              buffer: value.getBytes(),
+              dict: exportData(value.dict)
+            }
+          };
+        } else if (isDict(value)){
+          result = {
+            type: 'dict',
+            value: {}
+          };
+          value.forEach(function(key, value){
+            result.value[key] = exportData(value);
+          });
+        } else if (isArray(value)){
+          result = {
+            type: 'array',
+            value: []
+          };
+          value.forEach(function(e, index){
+            result.value[index] = exportData(e);
+          });
+        } else if (isString(value)){
+          result = {
+            type: 'string',
+            value: value
+          };
+        } else {
+          result = value;
+        }
+        return result;
+      };
+
+      var baseDictExported = exportData(baseDict);
+
       if (!descriptor) {
         if (type === 'Type3') {
           // FontDescriptor is only required for Type3 fonts when the document
@@ -2357,7 +2413,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         capHeight: descriptor.get('CapHeight'),
         flags: descriptor.get('Flags'),
         italicAngle: descriptor.get('ItalicAngle'),
-        coded: false
+        coded: false,
+        baseDict: baseDictExported
       };
 
       var cMapPromise;

@@ -60,6 +60,8 @@
     exports.MissingPDFException = pdfjsLibs.pdfjsSharedUtil.MissingPDFException;
     exports.SVGGraphics = pdfjsLibs.pdfjsDisplaySVG.SVGGraphics;
     exports.CanvasGraphics = pdfjsLibs.pdfjsDisplayCanvas.CanvasGraphics;
+    exports.CachedCanvases = pdfjsLibs.pdfjsDisplayCanvas.CachedCanvases;
+    exports.addContextCurrentTransform = pdfjsLibs.pdfjsDisplayCanvas.addContextCurrentTransform;
     exports.UnexpectedResponseException =
       pdfjsLibs.pdfjsSharedUtil.UnexpectedResponseException;
     exports.OPS = pdfjsLibs.pdfjsSharedUtil.OPS;

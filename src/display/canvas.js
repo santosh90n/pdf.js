@@ -219,7 +219,7 @@
           // reset canvas transform for emulated mozCurrentTransform, if needed
           canvasEntry.context.setTransform(1, 0, 0, 1, 0, 0);
         } else {
-          var canvas = createScratchCanvas(width, height);
+          var canvas = PDFJS.createScratchCanvas ? PDFJS.createScratchCanvas(width, height) : createScratchCanvas(width, height);
           var ctx = canvas.getContext('2d');
           if (trackTransform) {
             addContextCurrentTransform(ctx);
@@ -645,7 +645,7 @@
     function copyCtxState(sourceCtx, destCtx) {
       var properties = ['strokeStyle', 'fillStyle', 'fillRule', 'globalAlpha',
         'lineWidth', 'lineCap', 'lineJoin', 'miterLimit',
-        'globalCompositeOperation', 'font'];
+        'globalCompositeOperation', 'font', '_path'];
       for (var i = 0, ii = properties.length; i < ii; i++) {
         var property = properties[i];
         if (sourceCtx[property] !== undefined) {
@@ -742,9 +742,13 @@
         ctx.drawImage(composed, smask.offsetX, smask.offsetY);
         return;
       }
-      genericComposeSMask(maskCtx, layerCtx, mask.width, mask.height,
-        smask.subtype, backdrop, smask.transferMap);
-      ctx.drawImage(mask, 0, 0);
+      if (!maskCtx.applyLayer(layerCtx)){
+        //ctx.drawImage(layerCtx.canvas, 0, 0);
+        /*genericComposeSMask(maskCtx, layerCtx, mask.width, mask.height,
+         smask.subtype, backdrop, smask.transferMap);*/
+      } else {
+        ctx.drawImage(mask, 0, 0);
+      }
     }
 
     var LINE_CAP_STYLES = ['butt', 'round', 'square'];
@@ -1399,7 +1403,7 @@
         this.moveText(0, this.current.leading);
       },
 
-      paintChar: function CanvasGraphics_paintChar(character, x, y) {
+      paintChar: function CanvasGraphics_paintChar(character, x, y, charWidth) {
         var ctx = this.ctx;
         var current = this.current;
         var font = current.font;
@@ -1432,11 +1436,11 @@
         } else {
           if (fillStrokeMode === TextRenderingMode.FILL ||
             fillStrokeMode === TextRenderingMode.FILL_STROKE) {
-            ctx.fillText(character, x, y);
+            ctx.fillText(character, x, y, charWidth);
           }
           if (fillStrokeMode === TextRenderingMode.STROKE ||
             fillStrokeMode === TextRenderingMode.FILL_STROKE) {
-            ctx.strokeText(character, x, y);
+            ctx.strokeText(character, x, y, charWidth);
           }
         }
 
@@ -1581,23 +1585,24 @@
             }
           }
 
+          var charWidth = width * widthAdvanceScale + spacing * fontDirection;
+
           // Only attempt to draw the glyph if it is actually in the embedded font
           // file or if there isn't a font file so the fallback font is shown.
           if (glyph.isInFont || font.missingFile) {
             if (simpleFillText && !accent) {
               // common case
-              ctx.fillText(character, scaledX, scaledY);
+              ctx.fillText(character, scaledX, scaledY, charWidth);
             } else {
-              this.paintChar(character, scaledX, scaledY);
+              this.paintChar(character, scaledX, scaledY, charWidth);
               if (accent) {
                 scaledAccentX = scaledX + accent.offset.x / fontSizeScale;
                 scaledAccentY = scaledY - accent.offset.y / fontSizeScale;
-                this.paintChar(accent.fontChar, scaledAccentX, scaledAccentY);
+                this.paintChar(accent.fontChar, scaledAccentX, scaledAccentY, charWidth);
               }
             }
           }
 
-          var charWidth = width * widthAdvanceScale + spacing * fontDirection;
           x += charWidth;
 
           if (restoreNeeded) {
@@ -1701,7 +1706,7 @@
           var self = this;
           var canvasGraphicsFactory = {
             createCanvasGraphics: function (ctx) {
-              return new CanvasGraphics(ctx, self.commonObjs, self.objs);
+              return new (PDFJS.canvasGraphicsClass || CanvasGraphics)(ctx, self.commonObjs, self.objs);
             }
           };
           pattern = new TilingPattern(IR, color, this.ctx, canvasGraphicsFactory,
@@ -1725,6 +1730,17 @@
       },
       setFillRGBColor: function CanvasGraphics_setFillRGBColor(r, g, b) {
         var color = Util.makeCssRgb(r, g, b);
+        this.ctx.fillStyle = color;
+        this.current.fillColor = color;
+        this.current.patternFill = false;
+      },
+      setStrokeCMYKColor: function CanvasGraphics_setStrokeCMYKColor(c, m, y, k) {
+        var color = Util.makeCssCMYK(c, m, y, k);
+        this.ctx.strokeStyle = color;
+        this.current.strokeColor = color;
+      },
+      setFillCMYKColor: function CanvasGraphics_setFillCMYKColor(c, m, y, k) {
+        var color = Util.makeCssCMYK(c, m, y, k);
         this.ctx.fillStyle = color;
         this.current.fillColor = color;
         this.current.patternFill = false;
@@ -1786,13 +1802,13 @@
 
         this.baseTransform = this.ctx.mozCurrentTransform;
 
-        if (isArray(bbox) && 4 === bbox.length) {
+        /*if (isArray(bbox) && 4 === bbox.length) {
           var width = bbox[2] - bbox[0];
           var height = bbox[3] - bbox[1];
           this.ctx.rect(bbox[0], bbox[1], width, height);
           this.clip();
           this.endPath();
-        }
+        }*/
       },
 
       paintFormXObjectEnd: function CanvasGraphics_paintFormXObjectEnd() {
@@ -2152,9 +2168,16 @@
           } else {
             tmpCanvas = this.cachedCanvases.getCanvas('inlineImage',
               width, height);
-            var tmpCtx = tmpCanvas.context;
+            var canvas = document.createElement('canvas');
+            canvas.width = imgData.width;
+            canvas.height = imgData.height;
+
+            var tmpCtx = canvas.getContext('2d');
+
+            //var tmpCtx = tmpCanvas.context;
             putBinaryImageData(tmpCtx, imgData);
-            imgToPaint = tmpCanvas.canvas;
+            //imgToPaint = tmpCanvas.canvas;
+            imgToPaint = canvas;
           }
 
           var paintWidth = width, paintHeight = height;
@@ -2320,6 +2343,8 @@
     return CanvasGraphics;
   })();
 
+  exports.CachedCanvases = CachedCanvases;
   exports.CanvasGraphics = CanvasGraphics;
   exports.createScratchCanvas = createScratchCanvas;
+  exports.addContextCurrentTransform = addContextCurrentTransform;
 }));

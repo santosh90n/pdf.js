@@ -586,6 +586,7 @@ var Font = (function FontClosure() {
   function Font(name, file, properties) {
     var charCode, glyphName, unicode;
 
+    this.baseDict = properties.baseDict;
     this.name = name;
     this.loadedName = properties.loadedName;
     this.isType3Font = properties.isType3Font;
